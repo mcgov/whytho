@@ -1,0 +1,11 @@
+Credits:
+
+Matthew McGovern: mamcgove@microsoft.com (matthew@mcgov.dev)
+mem_cronch.c
+run_intel_memory_check.sh
+
+Michael Kelley: mikelley@microsoft.com
+run_check_storage_stack
+run_check_vuln_info
+run_max_single_cpu
+run_max_single_cpu_w_syscalls

@@ -31,5 +31,6 @@ get_content_within() {
     | grep -v .crt  \
     | grep -v bin \
     | grep -v .zip \
+    | grep -v xml \
     | xargs -t -I % sh -c "sudo cat %"
 }

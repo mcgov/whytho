@@ -1,6 +1,18 @@
 #! /bin/bash
-source common.h
+source ./common.sh
+install_dependencies sysbench curl
+
+# check if it was missing, if yes then use their package install script.
+if [ -z `which sysbench` ];
+then
+    curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+fi;
+
 install_dependencies sysbench
+if [ -z `which sysbench` ];
+then
+    exit 0;
+fi;
 
 # get an interrupt baseline
 cat /proc/interrupts

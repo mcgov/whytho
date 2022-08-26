@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 /*
     memhammer.c
@@ -49,7 +50,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("Random u64 from results: %lx\n", allocation[(time()*time())%(GIBIBYTE/8)]);
+    printf("Random u64 from results: %lx\n", allocation[(time(0)*time(0))%(GIBIBYTE/8)]);
 
     free(allocation);
     return 0;

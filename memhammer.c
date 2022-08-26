@@ -49,7 +49,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("Random u64 from results: %lx\n", allocation[allocation[0]%(GIBIBYTE/8)]);
+    printf("Random u64 from results: %lx\n", allocation[(time()*time())%(GIBIBYTE/8)]);
 
     free(allocation);
     return 0;

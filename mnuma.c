@@ -8,6 +8,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdbool.h>
+#include <x86intrin.h>
+
 /*
     mnuma.c
     let's poke caches and look at the physical page info
@@ -15,33 +17,79 @@
     author: Matthew G. McGovern matthew@mcgov.dev
 
 */
-uint64_t time_access_index(uint8_t* allocation, size_t size, size_t index){
-    int time_ = time(0);
+
+#define CACHE_LEVELS 3
+
+#pragma GCC push_options
+#pragma GCC optimize("O0")
+
+uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_point)
+{
+
     // train cache
-    struct timespec start, end;
-    for (int i = 0; i < 0x1000; i++) {
-        for (size_t j = 0; j < size; j++) {
-            allocation[j] = (j*i*time_)%0xFF;
+    uint64_t start = 0, end = 0;
+    uint8_t picked;
+
+    for (int i = 0; i < 0x1000; i++)
+    {
+        for (size_t j = size; j > 0; j--)
+        {
+            allocation[j] = (j * i) % 0xFF;
         }
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    uint8_t picked = allocation[index];
-    clock_gettime(CLOCK_MONOTONIC,&end);
-    printf("picked element: %lu in %lu s %lu ns\n", index, end.tv_sec - start.tv_sec, end.tv_nsec - start.tv_nsec);
+    for (int i = 0x100; i >= 0; i--)
+    {
+        picked = allocation[0];
+    }
 
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    picked = allocation[size+(size/2)];
-    clock_gettime(CLOCK_MONOTONIC,&end);
-    printf("picked element: %lu in %lu s %lu ns\n", size+(size/2), end.tv_sec - start.tv_sec, end.tv_nsec - start.tv_nsec);
+    start = __rdtsc();
+    picked = allocation[0];
+    end = __rdtsc();
+    printf("picked first element in %lu clock ticks\n", end - start);
+
+    start = __rdtsc();
+    picked = *access_point; // access beyond the first cache sized array
+    end = __rdtsc();
+    printf("picked last element: in %lu clock ticks\n", end - start);
 }
 
-int main(int argc, char** argv) {
+void *train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)
+{
+    size_t cache_size, allocation_size, start_address, end_address, cache_access_point;
+    uint8_t *allocation;
+    for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
+    {
+        printf("Training and accessing cache L%d-----------\n", cache_level + 1);
+        // get cache size
+        cache_size = cache_sizes[cache_level];
+        // determine size of allocation
+        allocation_size = cache_sizes[cache_level] * 3;
+        // allocation 3x the size of the cache (aligned alloc)
+        allocation = aligned_alloc(cache_size, allocation_size);
+
+        // fill it in with some stuff
+        for (int i = allocation_size; i >= 0; i--)
+        {
+            allocation[i] = i & 0xFF;
+        }
+
+        end_address = (uint64_t)allocation + allocation_size;
+        cache_access_point = (cache_size * 3) - 1; // access 3x outside the first cache sized allocation
+        time_access_index(allocation, cache_size, end_address);
+        allocation_out[cache_level] = allocation;
+    }
+}
+#pragma GCC pop_options
+
+int main(int argc, char **argv)
+{
 
     size_t l1d = 0, l1i = 0, l2 = 0, l3 = 0;
     if (argc < 5)
     {
-        printf("usage: mnuma `lscpu -C -B | tail -4 | awk ' { print $2 } ' | tr \"\n\" " " `");
+        printf("usage: mnuma `lscpu -C -B | tail -4 | awk ' { print $2 } ' | tr \"\n\" "
+               " `");
         return -1;
     }
     if (sscanf(argv[1], "%lu", &l1d) <= 0)
@@ -53,41 +101,61 @@ int main(int argc, char** argv) {
     if (sscanf(argv[4], "%lu", &l3) == EOF)
         return -1;
 
-    printf("Found cache sizes l1d %lu l1i %lu l2 %lu l3 %lu\n", l1d, l1i, l2 ,l3);
+    printf("Found cache sizes l1d %lu l1i %lu l2 %lu l3 %lu\n", l1d, l1i, l2, l3);
 
+    // run the training and accessing (not guaranteed to work as expected yet)
     size_t cache_sizes[] = {l1d, l2, l3};
+    uint8_t *allocations[CACHE_LEVELS] = {};
+    train_and_access(cache_sizes, CACHE_LEVELS, allocations);
 
-    for (int cache_level = 0; cache_level < sizeof(cache_sizes)/sizeof(size_t); cache_level++) {
-        size_t cache_size = cache_sizes[cache_level];
-        size_t allocation_size = cache_sizes[cache_level] * 2;
-        uint8_t* allocation = aligned_alloc(cache_size, allocation_size);
-        for(int i = 0; i < cache_size * 2; i++) {
-            allocation[i] = i & 0xFF;
-        }
-        uint64_t start_address = (uint64_t) allocation;
-        uint64_t end_address = (uint64_t) allocation + allocation_size;
-        time_access_index(allocation, cache_size-1, cache_size/2);
-    }
-
-/*
+    // get pagemap filename
     char filename[0x100];
     snprintf(filename, sizeof(filename), "/proc/%d/pagemap", getpid());
 
+    // open the pagemap
     int fd = open(filename, O_RDONLY);
-    if(fd < 0) {
-        perror("open");
-        return 1;
+    if (fd < 0)
+    {
+        perror(filename);
+        goto FREE_ALLOCATIONS;
+    }
+    printf("Opened %s\n", filename);
+
+    // get the physical address of the pages we used
+    for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
+    {
+
+        uint64_t start_address = allocations[cache_level];
+        uint64_t end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
+
+        uint64_t addresses[] = {start_address, end_address};
+        for (uint64_t i = 0; i < 2; i++)
+        {
+            uint64_t data;
+            uint64_t index = (addresses[i] / 0x1000) * sizeof(data);
+            if (pread(fd, &data, sizeof(data), index) != sizeof(data))
+            {
+                perror("pread");
+                goto CLOSE_FD;
+            }
+            else
+            {
+                printf("Cache L%d allocation was at:"
+                       " %-16lx (virtual)  %-16lx (physical)\n",
+                       cache_level,
+                       addresses[i],
+                       (data & 0x7fffffffffffff) * 0x1000);
+            }
+        }
     }
 
-    uint64_t start_address = allocation;
-    uint64_t end_address = allocation
+CLOSE_FD:
+    close(fd);
+FREE_ALLOCATIONS:
+    for (int i = 0; i < CACHE_LEVELS; i++)
+    {
+        free(allocations[i]);
+    }
 
-    for(uint64_t i = start_address; i < end_address; i += 0x1000) {
-        uint64_t data;
-        uint64_t index = (i / PAGE_SIZE) * sizeof(data);
-        if(pread(fd, &data, sizeof(data), index) != sizeof(data)) {
-            perror("pread");
-            break;
-        }
-*/
+    return 0;
 }

@@ -46,12 +46,12 @@ uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_poi
     start = __rdtsc();
     picked = allocation[0];
     end = __rdtsc();
-    printf("picked first element in %lu clock ticks\n", end - start);
+    printf("picked first element (%hhx) in %lu clock ticks\n", picked, end - start);
 
     start = __rdtsc();
     picked = *access_point; // access far beyond the first cache sized array
     end = __rdtsc();
-    printf("picked last element: in %lu clock ticks\n", end - start);
+    printf("picked last element (%hhx): in %lu clock ticks\n", picked, end - start);
 }
 
 void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)

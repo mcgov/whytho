@@ -74,7 +74,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
             allocation[i] = i & 0xFF;
         }
 
-        cache_access_point = (uint64_t)allocation + allocation_size -1;
+        cache_access_point = allocation + allocation_size -1;
         time_access_index(allocation, cache_size, cache_access_point);
         allocation_out[cache_level] = allocation;
     }
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
                 printf("Cache L%d allocation was at:"
                        " %-16lx (virtual)  %-16lx (physical)\n",
                        cache_level,
-                       addresses[i],
+                       (uint64_t)addresses[i],
                        (data & 0x7fffffffffffff) * 0x1000);
             }
         }

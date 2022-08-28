@@ -35,7 +35,7 @@ uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_poi
     {
         for (size_t j = size; j > 0; j--)
         {
-            allocation[j] = (j * i * time_ ) % 0xFF;
+            allocation[j] = (j * i * time_) % 0xFF;
         }
     }
 
@@ -66,7 +66,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
             allocation[i] = i & 0xFF;
         }
 
-        cache_access_point = allocation + allocation_size -1;
+        cache_access_point = allocation + allocation_size - 1;
         time_first_access(allocation, cache_size, cache_access_point);
 
         // time second access post-return
@@ -75,7 +75,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
         end = __rdtsc();
         printf("picked last element (%hhx): in %lu clock ticks\n", picked, end - start);
 
-        allocation_out[cache_level] = allocation; //save off the allocation
+        allocation_out[cache_level] = allocation; // save off the allocation
     }
 }
 #pragma GCC pop_options
@@ -123,10 +123,10 @@ int main(int argc, char **argv)
     for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
     {
 
-        uint8_t * start_address = allocations[cache_level];
-        uint8_t * end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
+        uint8_t *start_address = allocations[cache_level];
+        uint8_t *end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
 
-        uint8_t * addresses[] = {start_address, end_address};
+        uint8_t *addresses[] = {start_address, end_address};
         for (uint64_t i = 0; i < 2; i++)
         {
             uint64_t data;

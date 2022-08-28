@@ -29,12 +29,13 @@ uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_poi
     // train cache
     uint64_t start = 0, end = 0;
     uint8_t picked;
+    time_t time_ = time(0);
 
     for (int i = 0; i < 0x1000; i++)
     {
         for (size_t j = size; j > 0; j--)
         {
-            allocation[j] = (j * i) % 0xFF;
+            allocation[j] = (j * i * time_ ) % 0xFF;
         }
     }
 

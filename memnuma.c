@@ -23,7 +23,7 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_point)
+uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_point)
 {
 
     // train cache
@@ -38,7 +38,7 @@ uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_poi
         }
     }
 
-    for (int i = 0x100; i >= 0; i--)
+    for (int i = 0; i < 0x1000; i++)
     {
         picked = allocation[0];
     }
@@ -47,17 +47,13 @@ uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_poi
     picked = allocation[0];
     end = __rdtsc();
     printf("picked first element (%hhx) in %lu clock ticks\n", picked, end - start);
-
-    start = __rdtsc();
-    picked = *access_point; // access far beyond the first cache sized array
-    end = __rdtsc();
-    printf("picked last element (%hhx): in %lu clock ticks\n", picked, end - start);
 }
 
 void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)
 {
     size_t cache_size, allocation_size, start_address, end_address;
-    uint8_t *allocation, *cache_access_point;
+    uint64_t start, end;
+    uint8_t *allocation, *cache_access_point, picked;
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
         printf("Training and accessing cache L%d-----------\n", cache_level + 1);
@@ -75,8 +71,15 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
         }
 
         cache_access_point = allocation + allocation_size -1;
-        time_access_index(allocation, cache_size, cache_access_point);
-        allocation_out[cache_level] = allocation;
+        time_first_access(allocation, cache_size, cache_access_point);
+
+        // time second access post-return
+        start = __rdtsc();
+        picked = *cache_access_point; // access far beyond the first cache sized array
+        end = __rdtsc();
+        printf("picked last element (%hhx): in %lu clock ticks\n", picked, end - start);
+
+        allocation_out[cache_level] = allocation; //save off the allocation
     }
 }
 #pragma GCC pop_options

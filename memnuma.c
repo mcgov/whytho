@@ -50,6 +50,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
     size_t cache_size, allocation_size, start_address, end_address;
     uint64_t start, end;
     uint8_t *allocation, *cache_access_point, picked;
+    time_t time_ = time(0);
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
         printf("Training and accessing cache L%d-----------\n", cache_level + 1);
@@ -63,7 +64,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
         // fill it in with some stuff
         for (int i = allocation_size; i >= 0; i--)
         {
-            allocation[i] = i & 0xFF;
+            allocation[i] = (time_* i) & 0xFF;
         }
 
         cache_access_point = allocation + allocation_size - 1;

@@ -99,7 +99,7 @@ int main(int argc, char **argv)
         return -1;
     if (sscanf(argv[4], "%lu", &l3) == EOF)
         return -1;
-
+    printf("            --- Welcome to memnuma!  <('-'<) --- ");
     printf("Found cache sizes l1d %lu l1i %lu l2 %lu l3 %lu\n", l1d, l1i, l2, l3);
 
     // run the training and accessing (not guaranteed to work as expected yet)

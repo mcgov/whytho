@@ -35,7 +35,7 @@ uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_poi
     {
         for (size_t j = size; j > 0; j--)
         {
-            allocation[j] = (j * i * time_) % 0xFF;
+            allocation[j] = allocation[j+1];
         }
     }
 

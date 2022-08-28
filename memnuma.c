@@ -49,15 +49,15 @@ uint64_t time_access_index(uint8_t *allocation, size_t size, uint8_t *access_poi
     printf("picked first element in %lu clock ticks\n", end - start);
 
     start = __rdtsc();
-    picked = *access_point; // access beyond the first cache sized array
+    picked = *access_point; // access far beyond the first cache sized array
     end = __rdtsc();
     printf("picked last element: in %lu clock ticks\n", end - start);
 }
 
-void *train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)
+void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)
 {
-    size_t cache_size, allocation_size, start_address, end_address, cache_access_point;
-    uint8_t *allocation;
+    size_t cache_size, allocation_size, start_address, end_address;
+    uint8_t *allocation, *cache_access_point;
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
         printf("Training and accessing cache L%d-----------\n", cache_level + 1);
@@ -74,9 +74,8 @@ void *train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **al
             allocation[i] = i & 0xFF;
         }
 
-        end_address = (uint64_t)allocation + allocation_size;
-        cache_access_point = (cache_size * 3) - 1; // access 3x outside the first cache sized allocation
-        time_access_index(allocation, cache_size, end_address);
+        cache_access_point = (uint64_t)allocation + allocation_size -1;
+        time_access_index(allocation, cache_size, cache_access_point);
         allocation_out[cache_level] = allocation;
     }
 }
@@ -125,14 +124,14 @@ int main(int argc, char **argv)
     for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
     {
 
-        uint64_t start_address = allocations[cache_level];
-        uint64_t end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
+        uint8_t * start_address = allocations[cache_level];
+        uint8_t * end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
 
-        uint64_t addresses[] = {start_address, end_address};
+        uint8_t * addresses[] = {start_address, end_address};
         for (uint64_t i = 0; i < 2; i++)
         {
             uint64_t data;
-            uint64_t index = (addresses[i] / 0x1000) * sizeof(data);
+            uint64_t index = (((uint64_t)addresses[i]) / 0x1000) * sizeof(data);
             if (pread(fd, &data, sizeof(data), index) != sizeof(data))
             {
                 perror("pread");

@@ -39,11 +39,6 @@ uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_poi
         }
     }
 
-    for (int i = 0; i < 0x1000; i++)
-    {
-        picked = allocation[0];
-    }
-
     start = __rdtsc();
     picked = allocation[0];
     end = __rdtsc();

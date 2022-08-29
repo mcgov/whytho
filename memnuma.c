@@ -81,13 +81,13 @@ uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
     printf("List iterated in %lu clock ticks\n", (end - start) / element_count);
 }
 
-void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_list **allocation_out)
+void train_and_access(size_t *cache_sizes, size_t numer_of_caches, size_t per_cache, size_t span_caches, struct cache_list **allocation_out)
 {
     size_t cache_size, allocation_size, start_address, end_address;
     uint64_t start, end;
     struct cache_list *allocation;
     time_t time_ = time(0);
-    size_t elements_per_cache = 0x100, cache_count = 0x100;
+
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
 
@@ -97,13 +97,13 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_
         allocation_size = cache_sizes[cache_level] * 3;
 
         // create cache list including n elements across multiple cache sized allocations
-        allocation = create_cache_list(cache_size, elements_per_cache, cache_count);
+        allocation = create_cache_list(cache_size, per_cache, span_caches);
 
         printf("Training and accessing cache L%d... ", cache_level + 1);
         // amount of list elements remains the same, while the jumps between them are variable
         // based on the cache size.
         // we walk each list and divide the time by elements walked.
-        time_accesses(allocation, elements_per_cache * cache_count);
+        time_accesses(allocation, per_cache * span_caches);
 
         allocation_out[cache_level] = allocation; // save off the allocation
     }
@@ -134,7 +134,8 @@ int main(int argc, char **argv)
     // run the training and accessing (not guaranteed to work as expected yet)
     size_t cache_sizes[] = {l1d, l2, l3};
     struct cache_list *allocations[CACHE_LEVELS] = {};
-    train_and_access(cache_sizes, CACHE_LEVELS, allocations);
+    size_t elements_per_cache = 0x100, cache_count = 0x100;
+    train_and_access(cache_sizes, CACHE_LEVELS, elements_per_cache, cache_count, allocations);
 
     // get pagemap filename
     char filename[0x100];
@@ -157,10 +158,10 @@ int main(int argc, char **argv)
         uint8_t *end_address = start_address + (cache_sizes[cache_level]);
 
         uint8_t *addresses[] = {start_address, end_address};
-        for (uint64_t i = 0; i < 2; i++)
+        for (uint64_t i = start_address; i < end_address; i+=(cache_sizes[cache_level]/elements_per_cache))
         {
             uint64_t data;
-            uint64_t index = (((uint64_t)addresses[i]) / 0x1000) * sizeof(data);
+            uint64_t index = ((i) / 0x1000) * sizeof(data);
             if (pread(fd, &data, sizeof(data), index) != sizeof(data))
             {
                 perror("pread");
@@ -169,9 +170,9 @@ int main(int argc, char **argv)
             else
             {
                 printf("Cache L%d allocation was at:"
-                       " %-16lx (virtual)  %-16lx (physical)\n",
+                       " 0x%016lx (virtual)  0x%016lx (physical)\n",
                        cache_level,
-                       (uint64_t)addresses[i],
+                       (uint64_t)i,
                        (data & 0x7fffffffffffff) * 0x1000);
             }
         }

@@ -11,6 +11,7 @@
 #define ROL8(value) ((((size_t)value) << 8) | (((size_t)value) >> (sizeof(size_t) * (sizeof(size_t) - 1))))
 #define ITERATIONS 0x200
 
+
 size_t hammer_memory(size_t *allocation)
 {
     size_t timer_samples = 0;
@@ -33,20 +34,20 @@ size_t hammer_memory(size_t *allocation)
         {
             // smash some bits in sequence
             value = ROL8(value);
-            allocation[i] = ROL8(allocation[i]) ^ value * 0xB4DD1EB00;
+            allocation[(i^iter_start)%array_elements] = ROL8(allocation[i]) ^ value * 0xB4DD1EB00;
         }
         // get weird
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around a bit
             value = ROL8(value);
-            allocation[(i * 2) % (array_elements)] = ROL8(allocation[i]) ^ value * 0xFEDBE75;
+            allocation[(i * iter_start) % (array_elements)] = ROL8(allocation[i]) ^ value * 0xFEDBE75;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around some more
             value = ROL8(value);
-            allocation[(i * 2) % (array_elements)] = ROL8(allocation[i]) ^ 0xB4ff1ed * value;
+            allocation[(i * iter_start * 2) % (array_elements)] = ROL8(allocation[i]) ^ 0xB4ff1ed * value;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
@@ -59,7 +60,7 @@ size_t hammer_memory(size_t *allocation)
     loop_end = __rdtsc();
 
     for (int i = 0; i < ITERATIONS; i++){
-        printf("Access time for iteration %d: %ld (total ticks) %ld (average per access)\n", i, iteration_timers[i], iteration_timers[i]/(5*array_elements));
+        printf("Access time for iteration %d: %ld (total ticks) %ld (average per element)\n", i, iteration_timers[i], iteration_timers[i]/(5*array_elements));
     }
     printf(
         "Iterated in %ld (total ticks), average ticks/element in %ld ticks\n",

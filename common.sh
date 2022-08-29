@@ -17,7 +17,12 @@ install_dependencies() {
                 echo "$PACKAGE_MANAGER and $dependency are missing, exiting..."
                 #exit -1
             else
-                 sudo $PACKAGE_MANAGER install -y $dependency > /dev/null
+                if [ `echo $dependency | grep devel` ] && [ "$PACKAGE_MANAGER" == "apt-get" ];
+                then
+                    sudo $PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/` > /dev/null
+                else
+                    sudo $PACKAGE_MANAGER install -y $dependency > /dev/null
+                fi
             fi
         fi
     done

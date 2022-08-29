@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdalign.h>
+#include <string.h>
 #include <threads.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -9,6 +10,8 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include <x86intrin.h>
+#include <assert.h>
+#include <math.h>
 
 /*
     mnuma.c
@@ -23,34 +26,52 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-uint64_t time_first_access(uint8_t *allocation, size_t size, uint8_t *access_point)
+
+struct cache_list
 {
+    struct cache_list* next;
+    size_t data_sz;
+    size_t data;
+};
 
-    // train cache
-    uint64_t start = 0, end = 0;
-    uint8_t picked;
-    time_t time_ = time(0);
-
-    for (int i = 0; i < 0x1000; i++)
-    {
-        for (size_t j = size; j > 0; j--)
-        {
-            allocation[j] = allocation[j+1];
-        }
+/* create linked list elements in a cached size area */
+struct cache_list* create_cache_list(size_t cache_size, size_t per_cache, size_t span_caches){
+    size_t element_size = cache_size/per_cache;
+    size_t  elements = per_cache*span_caches;
+    assert(elements);
+    struct cache_list *first = (struct cache_list*) aligned_alloc(cache_size, span_caches*cache_size);
+    struct cache_list *next = first;
+    memset(first,'\0', cache_size);
+    while (--elements > 0) { //classic
+        next->data_sz = element_size;
+        next->next = (struct cache_list*)(((uint8_t*)next) + element_size);
+        next = next->next;
     }
-
-    start = __rdtsc();
-    picked = allocation[0];
-    end = __rdtsc();
-    printf("picked first element (%hhx) in %lu clock ticks\n", picked, end - start);
+    return first;
 }
 
-void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **allocation_out)
+
+uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
+{
+    struct cache_list* list_iter = allocation;
+    size_t start, end;
+    list_iter = allocation;
+    start = __rdtsc();
+    while( list_iter ){
+        // train cache
+        list_iter = list_iter->next;
+    }
+    end = __rdtsc();
+    printf("List iterated in %lu clock ticks\n", (end - start)/ element_count);
+}
+
+void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_list **allocation_out)
 {
     size_t cache_size, allocation_size, start_address, end_address;
     uint64_t start, end;
-    uint8_t *allocation, *cache_access_point, picked;
+    struct cache_list *allocation;
     time_t time_ = time(0);
+    size_t elements_per_cache = 0x100, cache_count = 100;
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
         printf("Training and accessing cache L%d-----------\n", cache_level + 1);
@@ -59,22 +80,12 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, uint8_t **all
         // determine size of allocation
         allocation_size = cache_sizes[cache_level] * 3;
         // allocation 3x the size of the cache (aligned alloc)
-        allocation = aligned_alloc(cache_size, allocation_size);
+        allocation = create_cache_list(cache_size, elements_per_cache, cache_count);
 
-        // fill it in with some stuff
-        for (int i = allocation_size; i >= 0; i--)
-        {
-            allocation[i] = (time_* i) & 0xFF;
-        }
 
-        cache_access_point = allocation + allocation_size - 1;
-        time_first_access(allocation, cache_size, cache_access_point);
-
-        // time second access post-return
-        start = __rdtsc();
-        picked = *cache_access_point; // access far beyond the first cache sized array
-        end = __rdtsc();
-        printf("picked last element (%hhx): in %lu clock ticks\n", picked, end - start);
+        // elements iterated are always elements per_cache * cache_count
+        // we walk each list and divide the time by elements walked.
+        time_accesses(allocation, elements_per_cache*cache_count);
 
         allocation_out[cache_level] = allocation; // save off the allocation
     }
@@ -104,7 +115,7 @@ int main(int argc, char **argv)
 
     // run the training and accessing (not guaranteed to work as expected yet)
     size_t cache_sizes[] = {l1d, l2, l3};
-    uint8_t *allocations[CACHE_LEVELS] = {};
+    struct cache_list *allocations[CACHE_LEVELS] = {};
     train_and_access(cache_sizes, CACHE_LEVELS, allocations);
 
     // get pagemap filename
@@ -124,8 +135,8 @@ int main(int argc, char **argv)
     for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
     {
 
-        uint8_t *start_address = allocations[cache_level];
-        uint8_t *end_address = allocations[cache_level] + (cache_sizes[cache_level] * 3);
+        uint8_t *start_address = (uint8_t*) allocations[cache_level];
+        uint8_t *end_address = start_address + (cache_sizes[cache_level]);
 
         uint8_t *addresses[] = {start_address, end_address};
         for (uint64_t i = 0; i < 2; i++)

@@ -34,7 +34,7 @@ struct cache_list
     size_t data;
 };
 
-/* create linked list elements in a cached size area */
+/* create n number of linked list elements per cache sized area, across a span of multiple cached size areas */
 struct cache_list* create_cache_list(size_t cache_size, size_t per_cache, size_t span_caches){
     size_t element_size = cache_size/per_cache;
     size_t  elements = per_cache*span_caches;
@@ -56,6 +56,7 @@ uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
     struct cache_list* list_iter = allocation;
     size_t start, end;
     list_iter = allocation;
+    // iterate list, time it, and show the time / elements iterated at the end.
     start = __rdtsc();
     while( list_iter ){
         // train cache

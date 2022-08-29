@@ -46,17 +46,15 @@ struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t
     // aligned alloc requires a power of 2, so check the cache size is one
     // and use the next highest size for the allocator if it's not.
     size_t pow2_check = next_highest_pow2(cache_size);
-    size_t allocation_size = span_caches * cache_size;
     if (pow2_check != cache_size)
     {
         printf("NOTE: cache size reported was not a power of 2: (%lx). "
                "Will use next highest pow2 for allocation size: (%lx)\n",
                cache_size, pow2_check);
-        allocation_size = next_highest_pow2(span_caches * cache_size);
         cache_size = pow2_check;
     }
 
-    struct cache_list *first = (struct cache_list *)aligned_alloc(cache_size, allocation_size);
+    struct cache_list *first = (struct cache_list *)aligned_alloc(cache_size, span_caches*cache_size);
     struct cache_list *next = first;
     memset(first, '\0', cache_size);
     while (--elements > 0)

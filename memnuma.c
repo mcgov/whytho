@@ -11,6 +11,8 @@
 #include <x86intrin.h>
 #include <assert.h>
 #include <math.h>
+#include <numaif.h>
+#include <errno.h>
 
 /*
     mnuma.c
@@ -154,27 +156,37 @@ int main(int argc, char **argv)
     for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
     {
 
-        uint8_t *start_address = (uint8_t *)allocations[cache_level];
-        uint8_t *end_address = start_address + (cache_sizes[cache_level]);
+        size_t start_address = (size_t)allocations[cache_level];
+        size_t end_address = start_address + (cache_sizes[cache_level]);
 
-        uint8_t *addresses[] = {start_address, end_address};
-        for (uint64_t i = start_address; i < end_address; i+=(cache_sizes[cache_level]/elements_per_cache))
+        size_t addresses[] = {start_address, end_address};
+        int numa_node = -1;
+        long result = 0;
+        for (size_t current_address = start_address; current_address < end_address; current_address+=(cache_sizes[cache_level]/elements_per_cache))
         {
             uint64_t data;
-            uint64_t index = ((i) / 0x1000) * sizeof(data);
+            off_t index = (off_t)((current_address) / 0x1000) * sizeof(data);
             if (pread(fd, &data, sizeof(data), index) != sizeof(data))
             {
                 perror("pread");
                 goto CLOSE_FD;
             }
-            else
-            {
-                printf("Cache L%d allocation was at:"
-                       " 0x%016lx (virtual)  0x%016lx (physical)\n",
-                       cache_level,
-                       (uint64_t)i,
-                       (data & 0x7fffffffffffff) * 0x1000);
+            printf("Cache L%d allocation was at:"
+                    " 0x%016lx (virtual)  0x%016lx (physical) on NUMA ",
+                    cache_level,
+                    (uint64_t)current_address,
+                    (data & 0x7fffffffffffff) * 0x1000);
+
+
+            result = get_mempolicy(&numa_node, NULL, 0, (void*)current_address, MPOL_F_NODE | MPOL_F_ADDR);
+
+            if (result == 0){
+                printf("%04x (found)\n", numa_node);
+            } else {
+                printf("____ (%s)\n", strerror(errno) );
             }
+
+
         }
     }
 

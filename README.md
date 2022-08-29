@@ -15,3 +15,4 @@ notes:
 - installed packages are not cleaned up after installation.
 - If running suite in a virtualized environment, your node is the noisy neighbor.
 - May leak sensitive information, scripts attempt to not collect keys etc but you may want to double check that no secrets are present before sharing data.
+- Will attempt to convert between centos libnuma-devel to ubuntu libnuma-dev form of package names, so use centos version when declaring depedencies

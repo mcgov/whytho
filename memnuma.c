@@ -71,7 +71,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_
     uint64_t start, end;
     struct cache_list *allocation;
     time_t time_ = time(0);
-    size_t elements_per_cache = 0x100, cache_count = 100;
+    size_t elements_per_cache = 0x100, cache_count = 0x100;
     for (int cache_level = 0; cache_level < numer_of_caches; cache_level++)
     {
         printf("Training and accessing cache L%d-----------\n", cache_level + 1);
@@ -79,11 +79,12 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_
         cache_size = cache_sizes[cache_level];
         // determine size of allocation
         allocation_size = cache_sizes[cache_level] * 3;
-        // allocation 3x the size of the cache (aligned alloc)
+
+        // create cache list including n elements across multiple cache sized allocations
         allocation = create_cache_list(cache_size, elements_per_cache, cache_count);
 
-
-        // elements iterated are always elements per_cache * cache_count
+        // amount of list elements remains the same, while the jumps between them are variable
+        // based on the cache size.
         // we walk each list and divide the time by elements walked.
         time_accesses(allocation, elements_per_cache*cache_count);
 

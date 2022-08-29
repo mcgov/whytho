@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdalign.h>
 #include <string.h>
-#include <threads.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <time.h>

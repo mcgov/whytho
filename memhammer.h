@@ -2,57 +2,27 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
 #include <stdbool.h>
+#include <x86intrin.h>
+#include <emmintrin.h>
 
 #define GIBIBYTE (0x1000 << 12)
 
 #define ROL8(value) ((((size_t)value) << 8) | (((size_t)value) >> (sizeof(size_t) * (sizeof(size_t) - 1))))
+#define ITERATIONS 0x200
 
-struct timespec assign_minimum(struct timespec current, struct timespec next)
-{
-    if (current.tv_sec || current.tv_nsec)
-    {
-        if (current.tv_sec < next.tv_sec ||
-            (current.tv_sec == next.tv_sec &&
-             current.tv_nsec < next.tv_nsec))
-            return current;
-        else
-            return next;
-    }
-    return next;
-}
-
-struct timespec assign_maximum(struct timespec current, struct timespec next)
-{
-    if (current.tv_sec || current.tv_nsec)
-    {
-        if (current.tv_sec < next.tv_sec ||
-            (current.tv_sec == next.tv_sec &&
-            current.tv_nsec < next.tv_nsec))
-            return next;
-        else
-            return current;
-    }
-    return next;
-}
-size_t hammer_memory(size_t *allocation, size_t iterations)
+size_t hammer_memory(size_t *allocation)
 {
     size_t timer_samples = 0;
     size_t value = 0xDEADBEEF;
     time_t epoch_start = time(0);
     size_t array_elements = GIBIBYTE / sizeof(size_t);
-    struct timespec timer_avg = {0, 0}, timer_min = {0, 0}, timer_max = {0, 0};
-    struct timespec timer_start, timer_end;
-    for (int repeat = 0; repeat < iterations; repeat++)
+    uint64_t loop_start, loop_end, iter_start;
+    uint64_t iteration_timers[ITERATIONS] = {};
+    loop_start = __rdtsc();
+    for (int repeat = 0; repeat < ITERATIONS; repeat++)
     {
-        bool sample_time = false;
-        if (clock_gettime(CLOCK_MONOTONIC, &timer_start) != 0)
-            printf("couldn't get timer for iteration %d: %s\n", repeat, strerror(errno));
-        else
-            sample_time = true;
-
+        iter_start = __rdtsc();
         for (size_t i = 0; i < array_elements; i++)
         {
             // uninitialized memory use
@@ -84,24 +54,18 @@ size_t hammer_memory(size_t *allocation, size_t iterations)
             value = ROL8(value);
             allocation[(i * epoch_start) % (array_elements)] = ROL8(allocation[i]) ^ 0xB4ff1ed * value;
         }
-        if (sample_time && clock_gettime(CLOCK_MONOTONIC, &timer_end) == 0)
-        {
-            timer_end.tv_nsec -= timer_start.tv_nsec;
-            timer_end.tv_sec -= timer_start.tv_sec;
-            timer_max = assign_maximum(timer_max, timer_end);
-            timer_min = assign_minimum(timer_min, timer_end);
-            printf("Iter %d: access in %lu s %lu ns\n", repeat, timer_end.tv_sec, timer_end.tv_nsec);
-        }
-        else
-            printf("couldn't get timer for iteration %d\n", repeat);
+        iteration_timers[repeat] = __rdtsc() - iter_start;
     }
+    loop_end = __rdtsc();
 
+    for (int i = 0; i < ITERATIONS; i++){
+        printf("Access time for iteration %d: %ld (total ticks) %ld (average per access)\n", i, iteration_timers[i], iteration_timers[i]/(5*array_elements));
+    }
     printf(
-        "Accesses:\n"
-        "Maximum: %lu s %lu ns\n"
-        "Minimum:%lu s %luns\n",
-        timer_max.tv_sec, timer_max.tv_nsec,
-        timer_min.tv_sec, timer_min.tv_nsec);
+        "Iterated in %ld (total ticks), average ticks/element in %ld ticks\n",
+         loop_end-loop_start,
+         (loop_end-loop_start)/(ITERATIONS*5*array_elements)
+        );
 
-    return allocation[allocation[epoch_start * timer_end.tv_nsec % (array_elements)] % (array_elements)];
+    return allocation[allocation[epoch_start * loop_start % (array_elements)] % (array_elements)];
 }

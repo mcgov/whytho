@@ -18,14 +18,10 @@
 
 int main(int argc, char **argv)
 {
-    size_t iterations;
-    if (argc > 1)
-        iterations = atoi(argv[1]);
-    else
-        iterations = 0x200;
 
+
+    printf("memhammer.c: This shouldn't take long...\n");
     size_t *allocation = malloc(GIBIBYTE);
-
     if (!allocation)
     {
         fprintf(stderr, "Could not allocate a gibibyte! %s\n", strerror(errno));
@@ -33,7 +29,7 @@ int main(int argc, char **argv)
     }
 
     // do a bunch of nonsense
-    size_t random_sizet = hammer_memory(allocation, iterations);
+    size_t random_sizet = hammer_memory(allocation);
     printf("Random u64 from results: %lx\n", random_sizet);
 
     free(allocation);

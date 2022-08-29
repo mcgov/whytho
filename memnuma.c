@@ -181,9 +181,9 @@ int main(int argc, char **argv)
             result = get_mempolicy(&numa_node, NULL, 0, (void*)current_address, MPOL_F_NODE | MPOL_F_ADDR);
 
             if (result == 0){
-                printf("%04x (found)\n", numa_node);
+                printf("0x%04x (found)\n", numa_node);
             } else {
-                printf("____ (%s)\n", strerror(errno) );
+                printf("0x____ (%s)\n", strerror(errno) );
             }
 
 

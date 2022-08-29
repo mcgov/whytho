@@ -26,48 +26,62 @@
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 
-
+size_t next_highest_pow2(size_t n)
+{
+    return 1 << ((sizeof(void *) * 8) - __builtin_clzl(n - 1));
+}
 struct cache_list
 {
-    struct cache_list* next;
+    struct cache_list *next;
     size_t data_sz;
     size_t data;
 };
 
 /* create n number of linked list elements per cache sized area, across a span of multiple cached size areas */
-struct cache_list* create_cache_list(size_t cache_size, size_t per_cache, size_t span_caches){
-    size_t element_size = cache_size/per_cache;
-    size_t  elements = per_cache*span_caches;
+struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t span_caches)
+{
+    size_t element_size = cache_size / per_cache;
+    size_t elements = per_cache * span_caches;
     assert(elements);
-    size_t next_highest_pow2 = 1 << (64 - __builtin_clzl(cache_size)- 1);
-    if (next_highest_pow2 != cache_size){
-        printf("NOTE: cache size reported was not a power of 2: %lx\n", cache_size);
+    // aligned alloc requires a power of 2, so check the cache size is one
+    // and use the next highest size for the allocator if it's not.
+    size_t pow2_check = next_highest_pow2(cache_size);
+    size_t allocation_size = span_caches * cache_size;
+    if (pow2_check != cache_size)
+    {
+        printf("NOTE: cache size reported was not a power of 2: (%lx). "
+               "Will use next highest pow2 for allocation size\n",
+               cache_size, pow2_check);
+        allocation_size = next_highest_pow2(span_caches * cache_size);
+        cache_size = pow2_check;
     }
-    struct cache_list *first = (struct cache_list*) aligned_alloc(next_highest_pow2, span_caches*next_highest_pow2);
+
+    struct cache_list *first = (struct cache_list *)aligned_alloc(cache_size, allocation_size);
     struct cache_list *next = first;
-    memset(first,'\0', cache_size);
-    while (--elements > 0) { //classic
+    memset(first, '\0', cache_size);
+    while (--elements > 0)
+    { // classic
         next->data_sz = element_size;
-        next->next = (struct cache_list*)(((uint8_t*)next) + element_size);
+        next->next = (struct cache_list *)(((uint8_t *)next) + element_size);
         next = next->next;
     }
     return first;
 }
 
-
 uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
 {
-    struct cache_list* list_iter = allocation;
+    struct cache_list *list_iter = allocation;
     size_t start, end;
     list_iter = allocation;
     // iterate list, time it, and show the time / elements iterated at the end.
     start = __rdtsc();
-    while( list_iter ){
+    while (list_iter)
+    {
         // train cache
         list_iter = list_iter->next;
     }
     end = __rdtsc();
-    printf("List iterated in %lu clock ticks\n", (end - start)/ element_count);
+    printf("List iterated in %lu clock ticks\n", (end - start) / element_count);
 }
 
 void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_list **allocation_out)
@@ -91,7 +105,7 @@ void train_and_access(size_t *cache_sizes, size_t numer_of_caches, struct cache_
         // amount of list elements remains the same, while the jumps between them are variable
         // based on the cache size.
         // we walk each list and divide the time by elements walked.
-        time_accesses(allocation, elements_per_cache*cache_count);
+        time_accesses(allocation, elements_per_cache * cache_count);
 
         allocation_out[cache_level] = allocation; // save off the allocation
     }
@@ -141,7 +155,7 @@ int main(int argc, char **argv)
     for (int cache_level = 0; cache_level < CACHE_LEVELS; cache_level++)
     {
 
-        uint8_t *start_address = (uint8_t*) allocations[cache_level];
+        uint8_t *start_address = (uint8_t *)allocations[cache_level];
         uint8_t *end_address = start_address + (cache_sizes[cache_level]);
 
         uint8_t *addresses[] = {start_address, end_address};

@@ -17,6 +17,7 @@ install_dependencies() {
                 echo "$PACKAGE_MANAGER and $dependency are missing, exiting..."
                 #exit -1
             else
+                # total hack to make centos->ubuntu conversion
                 if [ `echo $dependency | grep devel` ] && [ "$PACKAGE_MANAGER" == "apt-get" ];
                 then
                     sudo $PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/` > /dev/null

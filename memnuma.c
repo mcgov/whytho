@@ -39,7 +39,11 @@ struct cache_list* create_cache_list(size_t cache_size, size_t per_cache, size_t
     size_t element_size = cache_size/per_cache;
     size_t  elements = per_cache*span_caches;
     assert(elements);
-    struct cache_list *first = (struct cache_list*) aligned_alloc(cache_size, span_caches*cache_size);
+    size_t next_highest_pow2 = 1 << (64 - __builtin_clzl(cache_size)- 1);
+    if (next_highest_pow2 != cache_size){
+        printf("NOTE: cache size reported was not a power of 2: %lx\n", cache_size);
+    }
+    struct cache_list *first = (struct cache_list*) aligned_alloc(next_highest_pow2, span_caches*next_highest_pow2);
     struct cache_list *next = first;
     memset(first,'\0', cache_size);
     while (--elements > 0) { //classic
@@ -113,7 +117,7 @@ int main(int argc, char **argv)
     if (sscanf(argv[4], "%lu", &l3) == EOF)
         return -1;
     printf("            --- Welcome to memnuma!  <('-'<) --- ");
-    printf("Found cache sizes l1d %lu l1i %lu l2 %lu l3 %lu\n", l1d, l1i, l2, l3);
+    printf("Found cache sizes l1d %lx l1i %lx l2 %lx l3 %lx \n", l1d, l1i, l2, l3);
 
     // run the training and accessing (not guaranteed to work as expected yet)
     size_t cache_sizes[] = {l1d, l2, l3};

@@ -50,7 +50,7 @@ struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t
     if (pow2_check != cache_size)
     {
         printf("NOTE: cache size reported was not a power of 2: (%lx). "
-               "Will use next highest pow2 for allocation size\n",
+               "Will use next highest pow2 for allocation size: (%lx)\n",
                cache_size, pow2_check);
         allocation_size = next_highest_pow2(span_caches * cache_size);
         cache_size = pow2_check;

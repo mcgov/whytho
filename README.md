@@ -3,9 +3,9 @@ Info Gathering Tools
 Some commands and scripts to run to get info about memory latency, storage, and CPU info.
 
 usage:
-`chmod +x ./*.sh && ./RUN_ALL_TESTS.sh`
+`./RUN_ALL_TESTS.sh`
 
-outputs logs into results/all_results.log
+outputs logs into a zip file into the top level dir `hostname-timestamp`.zip
 
 notes:
 - some package install lines only support centos/rhel/oracle

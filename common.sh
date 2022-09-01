@@ -1,32 +1,35 @@
 #! /bin/bash
 
+
 install_dependencies() {
-    for pkg in "yum" "pacman" "emerge" "zypp" "apt-get" "apk"
+    PACKAGE_MANAGER=""
+    for pkg in "dnf" "yum" "pacman" "emerge" "zypp" "zypper" "apt-get" "apt" "apk"
     do
         if ! [[ -z `which $pkg` ]]; then
             PACKAGE_MANAGER=$pkg
             break
         fi
     done
+    if [ -z "$PACKAGE_MANAGER" ];
+    then
+        echo "Could not identify package manager for this system!"
+        return 0
+    fi
     for dependency in $@
     do
-        if [ -z `which $dependency` ];
+        if [ -z `which $dependency` ]; # this doesn't work for libraries but then also sort of does
         then
-            if [ -z `which $PACKAGE_MANAGER` ];
+            # total hack to make centos->ubuntu conversion
+            echo "$dependency" >> ./packages_added.log
+            if [ `echo $dependency | grep devel` ] && [ "$PACKAGE_MANAGER" == "apt-get" ];
             then
-                echo "$PACKAGE_MANAGER and $dependency are missing, exiting..."
-                #exit -1
+                sudo $PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/`
             else
-                # total hack to make centos->ubuntu conversion
-                echo "$dependency" >> ./packages_added.log
-                if [ `echo $dependency | grep devel` ] && [ "$PACKAGE_MANAGER" == "apt-get" ];
-                then
-                    sudo $PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/` > /dev/null
-                else
-                    sudo $PACKAGE_MANAGER install -y $dependency > /dev/null
-                fi
+                sudo $PACKAGE_MANAGER install -y $dependency 
             fi
+            return $?
         fi
+        
     done
 }
 

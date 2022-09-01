@@ -5,7 +5,7 @@ install_dependencies() {
     PACKAGE_MANAGER=""
     for pkg in "dnf" "yum" "pacman" "emerge" "zypp" "zypper" "apt-get" "apt" "apk"
     do
-        if ! [[ -z `which $pkg` ]]; then
+        if ! [[ -z `which $pkg 2> /dev/null` ]]; then
             PACKAGE_MANAGER=$pkg
             break
         fi
@@ -25,11 +25,11 @@ install_dependencies() {
             then
                 sudo $PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/`
             else
-                sudo $PACKAGE_MANAGER install -y $dependency 
+                sudo $PACKAGE_MANAGER install -y $dependency
             fi
             return $?
         fi
-        
+
     done
 }
 

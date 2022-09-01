@@ -45,12 +45,12 @@ size_t hammer_memory(size_t *allocation)
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around some more
-            allocation[(i ^ iter_start) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
+            allocation[(i ^ iter_start ^ allocation[i]) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around using epoch mod as an offset
-            allocation[(i ^ epoch_start ^ iter_start) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
+            allocation[(i ^ epoch_start ^ iter_start ^ allocation[i]) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
         }
         iteration_timers[repeat] = __rdtsc() - iter_start;
         if (iteration_timers[repeat] > max)

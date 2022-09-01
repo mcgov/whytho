@@ -27,32 +27,30 @@ size_t hammer_memory(size_t *allocation)
     {
         value = ROL8(value);
         iter_start = __rdtsc();
+
         for (size_t i = 0; i < array_elements; i++)
         {
-            // uninitialized memory use
-
-            allocation[i] += epoch_start * value ^ 0xC4FEF00D;
+            allocation[i] += iter_start;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
-            // smash some bits in sequence
-            allocation[(i ^ iter_start) % array_elements] = allocation[i] ^ value * 0xB4DD1EB00;
+            allocation[(i ^ iter_start) % array_elements] = allocation[i];
         }
         // get weird
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around a bit
-            allocation[(i * iter_start) % (array_elements)] = allocation[i] ^ value * 0xFEDBE75;
+            allocation[(i ^ iter_start) % (array_elements)] = allocation[i] ^ value ^ 0xFEDBE75;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around some more
-            allocation[(i * iter_start * 2) % (array_elements)] = allocation[i] ^ 0xB4ff1ed * value;
+            allocation[(i ^ iter_start) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
         }
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around using epoch mod as an offset
-            allocation[(i * epoch_start) % (array_elements)] = allocation[i] ^ 0xB4ff1ed * value;
+            allocation[(i ^ epoch_start ^ iter_start) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
         }
         iteration_timers[repeat] = __rdtsc() - iter_start;
         if (iteration_timers[repeat] > max)

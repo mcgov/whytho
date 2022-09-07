@@ -64,6 +64,7 @@ show_installed_packages() {
     *)
         echo "get_installed_packages is not implemented on this platform!"
         ;;
+    esac
 }
 
 get_content_within() {

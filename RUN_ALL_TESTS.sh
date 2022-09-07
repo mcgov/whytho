@@ -9,9 +9,14 @@ sudo ./RUN_PERF_BENCHMARKS.sh $FILE_TAG
 # save results into a .zip
 install_dependencies zip
 sudo chown -R $USER ./results
+#zip results...
 zip "$FILE_TAG.zip" ./results/*
-
 echo "All done :) results are in $FILE_TAG.zip"
+
+if [ "$1" != "--retain" ]; then
+    #clear results
+    rm -rf ./results
+fi;
 
 # warn about packages installed
 if [ -e ./packages_added.log ];
@@ -20,5 +25,3 @@ then
     cat ./packages_added.log
 fi
 
-#clear results
-rm -rf ./results

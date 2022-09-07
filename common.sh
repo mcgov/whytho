@@ -2,6 +2,13 @@
 
 test -d results || mkdir results
 
+
+if [ $WHYTHO_DEBUG == 1 ]; then
+    export WHYTHO_DEBUG_ACTIONS=""
+else
+    export WHYTHO_DEBUG_ACTIONS="exit 0;"
+fi
+
 install_dependencies() {
     PACKAGE_MANAGER=""
     for pkg in "dnf" "yum" "pacman" "emerge" "zypp" "zypper" "apt-get" "apt" "apk"

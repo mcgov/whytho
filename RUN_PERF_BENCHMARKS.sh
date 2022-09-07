@@ -9,7 +9,7 @@ fi
 
 touch $INFO_DEST
 echo "Running perf benchmarks. NOTE: This will take a while. Now might be a good time to get some coffee?"
-ls perf_run_*.sh | xargs -t -I % sh -c "./%; exit 0;" &> $INFO_DEST
+ls perf_run_*.sh | xargs -t -I % sh -c "./%; $WHYTHO_DEBUG_ACTIONS;" &> $INFO_DEST
 if ! [ -e results/dmesg.log ];
 then
     echo "$(hostname) ------------" >> results/dmesg.log

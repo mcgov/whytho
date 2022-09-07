@@ -56,7 +56,7 @@ show_installed_packages() {
         sudo dpkg --list --no-pager
         ;;
     zypper | zypp)
-        sudo zypper list -I
+        sudo zypper search -i
         ;;
     pacman)
         sudo pacman -Qqe

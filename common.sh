@@ -89,8 +89,6 @@ start_interrupts_log() {
 
 compare_interrupts_logs() {
     cat /proc/interrupts >> after.log
-    echo "interrupts before----------------------------------"
-    cat before.log
     echo "difference-----------------------------------------"
     diff before.log after.log
     start_interrupts_log #reset after comparison

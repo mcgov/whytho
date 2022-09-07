@@ -2,7 +2,7 @@
 
 source ./common.sh
 
-if [ -d /var/crash ] && [ `sudo ls /var/crash/*` ]; 
+if [ -d /var/crash ] && [ `sudo ls /var/crash/*` ];
 then
   echo "Found things in /var/crash, copying content to results"
   install_dependencies zip
@@ -12,4 +12,4 @@ else
   echo "Did not find anything in /var/crash (below)..."
   sudo ls -la /var/crash
 fi
-  
+

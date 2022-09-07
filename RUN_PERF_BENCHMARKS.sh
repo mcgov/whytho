@@ -1,5 +1,6 @@
 #! /bin/bash
-test -d results || mkdir results
+source ./common.sh
+
 if [ -z $1 ]; then
     INFO_DEST="results/perf_results.log"
 else

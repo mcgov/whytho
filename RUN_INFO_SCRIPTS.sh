@@ -1,5 +1,6 @@
 #! /bin/bash
-test -d results || mkdir results
+source ./common.sh
+
 if [ -z $1 ]; then
     INFO_DEST="results/info_results.log"
 else
@@ -9,7 +10,7 @@ fi
 touch $INFO_DEST
 echo "Gathering info. NOTE: This will take a short while, just gathering info..."
 ls run_*.sh | xargs -t -I % sh -c "./%; exit 0;" &> $INFO_DEST
-if ! [ -e results/dmesg.log ]; 
+if ! [ -e results/dmesg.log ];
 then
     echo "$(hostname) ------------" >> results/dmesg.log
     sudo dmesg >> results/dmesg.log

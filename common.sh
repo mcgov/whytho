@@ -1,5 +1,6 @@
 #! /bin/bash
 
+test -d results || mkdir results
 
 install_dependencies() {
     PACKAGE_MANAGER=""

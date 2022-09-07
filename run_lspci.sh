@@ -1,2 +1,4 @@
 #! /bin/bash
-lspci -vvv
+source ./common.sh
+install_dependencies lspci
+sudo lspci -vvv

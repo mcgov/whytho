@@ -32,8 +32,12 @@ install_dependencies() {
     do
         if [ -z `which $dependency` ]; # this doesn't work for libraries but then also sort of does
         then
+            if [ -z "`test -f ./packages_added.log && cat ./packages_added.log | grep $dependency`"];
+            then
+                echo "$dependency" >> ./packages_added.log
+            fi
+
             # total hack to make centos->ubuntu conversion
-            echo "$dependency" >> ./packages_added.log
             if [ `echo $dependency | grep devel` ] && [ "$WHYTHO_PACKAGE_MANAGER" == "apt-get" ];
             then
                 sudo $WHYTHO_PACKAGE_MANAGER install -y `echo $dependency | sed s/devel/dev/`

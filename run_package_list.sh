@@ -1,2 +1,4 @@
 #! /bin/bash
-sudo yum list installed
+source ./common.sh
+
+show_installed_packages

@@ -82,3 +82,21 @@ get_content_within() {
     | grep -v xml \
     | xargs -t -I % sh -c "sudo cat %"
 }
+
+start_interrupts_log() {
+    cat /proc/interrupts >> before.log
+}
+
+compare_interrupts_logs() {
+    cat /proc/interrupts >> after.log
+    echo "interrupts before----------------------------------"
+    cat before.log
+    echo "difference-----------------------------------------"
+    diff before.log after.log
+    start_interrupts_log #reset after comparison
+}
+
+cleanup_interrupts_logs() {
+    test -e before.log && rm before.log
+    test -e after.log  && rm after.log
+}

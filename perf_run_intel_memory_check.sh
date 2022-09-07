@@ -1,4 +1,7 @@
 #! /bin/bash
+
+source ./common.sh
+
 # store things in a tmp directory
 mkdir mlc_dir
 cd ./mlc_dir
@@ -10,11 +13,13 @@ SAVED_NR_HUGEPAGE=$(sudo cat /proc/sys/vm/nr_hugepages)
 # enable a bunch of hugepages
 echo 4000 | sudo tee /proc/sys/vm/nr_hugepages
 # note interrupts before test
-cat /proc/interrupts
+
+start_interrupts_log
 # run the tool
 ./Linux/mlc
 # note interrupts after test
-cat /proc/interrupts
+compare_interrupts_logs
+
 # remove tmp assets
 cd ..
 rm -rf ./mlc_dir

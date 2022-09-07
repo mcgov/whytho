@@ -3,7 +3,7 @@
 test -d results || mkdir results
 
 
-if [ $WHYTHO_DEBUG == 1 ]; then
+if [ "$WHYTHO_DEBUG" == "1" ]; then
     echo "Running with debug options (xargs should fail on nonzero exit code)"
     export WHYTHO_DEBUG_ACTIONS=""
 else

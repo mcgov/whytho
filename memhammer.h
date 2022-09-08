@@ -17,7 +17,7 @@ size_t hammer_memory(size_t *allocation, size_t size)
     time_t epoch_start = time(0);
     size_t array_elements = (size * GIBIBYTE) / sizeof(size_t);
     uint64_t loop_start, loop_end, iter_start, max = 0, min = UINT64_MAX, loop_work_time = 0;
-    size_t element_accesses = (5 * array_elements);
+    size_t element_accesses = (5 * array_elements * 2);
 
     uint64_t iteration_timers[ITERATIONS] = {};
     loop_start = __rdtsc();
@@ -62,7 +62,7 @@ size_t hammer_memory(size_t *allocation, size_t size)
     for (int i = 0; i < ITERATIONS; i++)
     {
         printf("Access time for iteration %d: %ld (total ticks) %ld (average per element)\n",
-               i, iteration_timers[i], iteration_timers[i] / element_accesses);
+               i, iteration_timers[i], iteration_timers[i] / element_accesses );
         loop_work_time += iteration_timers[i];
     }
 

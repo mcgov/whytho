@@ -7,7 +7,6 @@
 #include <emmintrin.h>
 
 #define GIBIBYTE (0x1000 << 12)
-
 #define ROL8(value) ((((size_t)value) << 8) | (((size_t)value) >> (sizeof(size_t) * (sizeof(size_t) - 1))))
 #define ITERATIONS 0x200
 
@@ -18,8 +17,7 @@ size_t hammer_memory(size_t *allocation)
     time_t epoch_start = time(0);
     size_t array_elements = GIBIBYTE / sizeof(size_t);
     uint64_t loop_start, loop_end, iter_start, max = 0, min = UINT64_MAX, loop_work_time = 0;
-    size_t element_accesses =  (5 * array_elements);
-
+    size_t element_accesses = (5 * array_elements);
 
     uint64_t iteration_timers[ITERATIONS] = {};
     loop_start = __rdtsc();
@@ -28,6 +26,9 @@ size_t hammer_memory(size_t *allocation)
         value = ROL8(value);
         iter_start = __rdtsc();
 
+        // multiple pointless allocation accesses
+        // assignments/accesses hold no special purpose other than
+        // being sort of random
         for (size_t i = 0; i < array_elements; i++)
         {
             allocation[i] += iter_start;
@@ -36,7 +37,6 @@ size_t hammer_memory(size_t *allocation)
         {
             allocation[(i ^ iter_start) % array_elements] = allocation[i];
         }
-        // get weird
         for (size_t i = 0; i < array_elements; i++)
         {
             // jump around a bit

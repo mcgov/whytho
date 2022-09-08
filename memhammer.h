@@ -31,7 +31,7 @@ size_t hammer_memory(size_t *allocation, size_t size)
         // being sort of random
         for (size_t i = 0; i < array_elements; i++)
         {
-            allocation[i] += iter_start;
+            allocation[i] += allocation[(iter_start + i) % array_elements];
         }
         for (size_t i = 0; i < array_elements; i++)
         {

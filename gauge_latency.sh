@@ -12,14 +12,16 @@ tar xvf ./mlc_v3.9a.tgz
 SAVED_NR_HUGEPAGE=$(sudo cat /proc/sys/vm/nr_hugepages)
 # enable a bunch of hugepages
 echo 4000 | sudo tee /proc/sys/vm/nr_hugepages
-
 cd ..
 
 # run the tool and prepare the results to be passed to the helper c program
 LATENCIES=`./mlc_dir/Linux/mlc --loaded_latency | grep -P "[0-9]+\s+[0-9]+\.[0-9]+\s+[0-9]+\.[0-9]+" | awk '{print $2}' | tr '\n' ' '`
 
+#cleanup
+rm -rf ./mlc_dir
+echo $SAVED_NR_HUGEPAGE | sudo tee /proc/sys/vm/nr_hugepages
 
-
+#do the final parsing
 gcc ./gauge_latency_helper.c -o gauge_latency_helper --std=gnu11
 ./gauge_latency_helper $LATENCIES
 

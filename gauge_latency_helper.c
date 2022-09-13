@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
         if (sscanf(argv[i], "%f", &sample) == 1){
             if (sample > THRESHOLD) {
                 count_above_threshold++;
+                printf("success processing sample > %f: %f\n", THRESHOLD, sample);
             }
             else if (sample < 0.0) {
                 printf("Error processing sample: %s\n", argv[i]);

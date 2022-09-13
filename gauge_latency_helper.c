@@ -14,6 +14,13 @@ int main(int argc, char** argv) {
             if (sample > THRESHOLD) {
                 count_above_threshold++;
             }
+            else if (sample < 0.0) {
+                printf("Error processing sample: %s\n", argv[i]);
+                could_not_parse++;
+            }
+            else{
+                printf("success processing sample < %f: %f\n", THRESHOLD, sample);
+            }
         }
         else {
             fprintf(stderr, "ERROR: could not match argument: %s\n", argv[i]);
@@ -21,5 +28,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    return count_above_threshold < 2 && could_not_parse < 1 ? 0 : 0xFF;
+    return count_above_threshold < 2 && could_not_parse < 2 ? 0 : 0xFF;
 }

@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 // arbitrary latency threshold (nanoseconds)
-#define THRESHOLD 350.0
+#define THRESHOLD 300.0
 
 
 int main(int argc, char** argv) {
@@ -35,5 +35,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    return count_above_threshold < 3 && could_not_parse < 2 ? 0 : 0xFF;
+    return count_above_threshold < 4 && could_not_parse < 2 ? 0 : 0xFF;
 }

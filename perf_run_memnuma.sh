@@ -2,7 +2,9 @@
 
 source ./common.sh
 
-install_dependencies lscpu gcc lsmem libnuma-devel
+install_dependencies lscpu gcc lsmem
+install_dependencies libnuma-devel || true
+install_dependencies numctl-libs || true
 
 gcc memnuma.c -O1 -o memnuma --std=gnu11 -fno-aggressive-loop-optimizations -lnuma --debug
 

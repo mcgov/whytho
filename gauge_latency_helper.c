@@ -1,8 +1,15 @@
-/* too-simple tool to check latency measurements from mlc */
+/* too-simple tool to check latency measurements from mlc
+
+  set an arbitrary threshold with THRESHOLD
+  pass the measurements from Latency (ns) column as arguments to this program
+  returns 0 on success
+*/
 
 #include <stdio.h>
 
-#define THRESHOLD 250.0
+// arbitrary latency threshold (nanoseconds)
+#define THRESHOLD 350.0
+
 
 int main(int argc, char** argv) {
     float sample;
@@ -28,5 +35,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    return count_above_threshold < 2 && could_not_parse < 2 ? 0 : 0xFF;
+    return count_above_threshold < 3 && could_not_parse < 2 ? 0 : 0xFF;
 }

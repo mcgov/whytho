@@ -98,3 +98,20 @@ cleanup_interrupts_logs() {
     test -e before.log && rm before.log
     test -e after.log  && rm after.log
 }
+
+install_sysbench() {
+    install_dependencies sysbench curl
+
+    # check if it was missing, if yes then use their package install script.
+    if [ -z `which sysbench` ];
+    then
+        curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+    fi;
+
+    install_dependencies sysbench
+    if [ -z `which sysbench` ];
+    then
+        exit 0;
+    fi;
+
+}

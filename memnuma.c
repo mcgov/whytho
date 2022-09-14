@@ -71,14 +71,15 @@ uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
     struct cache_list *list_iter = allocation;
     size_t start, end;
     list_iter = allocation;
+    int _dummy;
     // iterate list, time it, and show the time / elements iterated at the end.
-    start = __rdtsc();
+    start = __rdtscp(&_dummy);
     while (list_iter)
     {
         // train cache
         list_iter = list_iter->next;
     }
-    end = __rdtsc();
+    end = __rdtscp(&_dummy);
     printf("List iterated in %lu clock ticks\n", (end - start) / element_count);
 }
 #pragma GCC pop_options

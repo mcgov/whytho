@@ -18,13 +18,13 @@ size_t hammer_memory(size_t *allocation, size_t size)
     size_t array_elements = (size * GIBIBYTE) / sizeof(size_t);
     uint64_t loop_start, loop_end, iter_start, max = 0, min = UINT64_MAX, loop_work_time = 0;
     size_t element_accesses = (5 * array_elements * 2);
-
+    int _dummy;
     uint64_t iteration_timers[ITERATIONS] = {};
-    loop_start = __rdtsc();
+    loop_start = __rdtscp(&_dummy);
     for (int repeat = 0; repeat < ITERATIONS; repeat++)
     {
         value = ROL8(value);
-        iter_start = __rdtsc();
+        iter_start = __rdtscp(&_dummy);
 
         // multiple pointless allocation accesses
         // assignments/accesses hold no special purpose other than
@@ -52,17 +52,17 @@ size_t hammer_memory(size_t *allocation, size_t size)
             // jump around using epoch mod as an offset
             allocation[(i ^ epoch_start ^ iter_start ^ allocation[i]) % (array_elements)] = allocation[i] ^ 0xB4ff1ed ^ value;
         }
-        iteration_timers[repeat] = __rdtsc() - iter_start;
+        iteration_timers[repeat] = __rdtscp(&_dummy) - iter_start;
         if (iteration_timers[repeat] > max)
             max = iteration_timers[repeat];
         if (iteration_timers[repeat] < min)
             min = iteration_timers[repeat];
     }
-    loop_end = __rdtsc();
+    loop_end = __rdtscp(&_dummy);
     for (int i = 0; i < ITERATIONS; i++)
     {
         printf("Access time for iteration %d: %ld (total ticks) %ld (average per element)\n",
-               i, iteration_timers[i], iteration_timers[i] / element_accesses );
+               i, iteration_timers[i], iteration_timers[i] / element_accesses);
         loop_work_time += iteration_timers[i];
     }
 
@@ -77,7 +77,7 @@ size_t hammer_memory(size_t *allocation, size_t size)
     return allocation[allocation[epoch_start * loop_start % (array_elements)] % (array_elements)];
 }
 
-static const char* time_estimate_messages[] = {
+static const char *time_estimate_messages[] = {
     "This will go very quickly",
     "This will go pretty quickly",
     "This might go sort of quicly"
@@ -86,11 +86,13 @@ static const char* time_estimate_messages[] = {
     "This will take a long time",
     "You've selected over 1TiB of memory, this might take a very long time.",
     "If you don't have 4TiB of RAM this will take a verrrry long time",
-    "You have 17TiB of ram?? What year is it?"
-};
-const char* get_time_estimation_string(long gibibytes){
-    for (int i = 0; i < sizeof(time_estimate_messages)/sizeof(const char*); i++){
-        if (1<<(i*2) >= gibibytes) {
+    "You have 17TiB of ram?? What year is it?"};
+const char *get_time_estimation_string(long gibibytes)
+{
+    for (int i = 0; i < sizeof(time_estimate_messages) / sizeof(const char *); i++)
+    {
+        if (1 << (i * 2) >= gibibytes)
+        {
             return time_estimate_messages[i];
         }
     }

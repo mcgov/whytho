@@ -100,6 +100,10 @@ cleanup_interrupts_logs() {
 }
 
 install_sysbench() {
+    if [ -n `which sysbench` ];
+    then
+        return 0
+    fi;
     install_dependencies sysbench curl
 
     # check if it was missing, if yes then use their package install script.

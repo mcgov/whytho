@@ -20,7 +20,7 @@ PERCENTILE_CHECK="`cat sysbench_result.log | grep \"95th percentile:\"`"
 # should be tailored to the system, it will vary between hardware.
 echo "Scoring latency..."
 if [ -n "$PERCENTILE_CHECK" ]; then
-    RESULT=`echo "$PERCENTILE_CHECK" | awk '{  print  ($3  > 2500.0 ? "fail" : "pass")  }'`
+    RESULT=`echo "$PERCENTILE_CHECK" | awk '{  print  ($3  > 3500.0 ? "fail" : "pass")  }'`
 #                                                              ^ threshold (ms)
 else
     RESULT="error"

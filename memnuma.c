@@ -140,6 +140,10 @@ int main(int argc, char **argv)
     // across multiple cache sized allocations
     run_cache_access_test(cache_sizes, CACHE_LEVELS, elements_per_cache, cache_count, allocations);
 
+    if (argc >= 6) {
+        printf("Skipping page map check...\n");
+        goto FREE_ALLOCATIONS;
+    }
     // get pagemap filename
     char filename[0x100];
     snprintf(filename, sizeof(filename), "/proc/%d/pagemap", getpid());

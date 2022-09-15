@@ -32,7 +32,7 @@ install_dependencies() {
     do
         if [ -z `which $dependency` ]; # this doesn't work for libraries but then also sort of does
         then
-            if [ -z "`test -f ./packages_added.log && cat ./packages_added.log | grep $dependency`"];
+            if [ -z "`test -f ./packages_added.log && cat ./packages_added.log | grep $dependency`" ];
             then
                 echo "$dependency" >> ./packages_added.log
             fi

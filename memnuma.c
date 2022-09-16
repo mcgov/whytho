@@ -121,8 +121,10 @@ bool run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t p
 
         // create cache list including n elements across multiple cache sized allocations
         allocation = create_cache_list(cache_size, per_cache, span_caches);
-        if (!allocation)
+        if (!allocation) {
+            printf("Could not create cache L%d\n", cache_level+1);
             return false;
+        }
 
         printf("Training and accessing cache L%d... ", cache_level + 1);
         // amount of list elements remains the same, while the jumps between them are variable
@@ -131,8 +133,8 @@ bool run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t p
         time_accesses(allocation, per_cache * span_caches);
 
         allocation_out[cache_level] = allocation; // save off the allocation
-        return true;
     }
+    return true;
 }
 
 int main(int argc, char **argv)

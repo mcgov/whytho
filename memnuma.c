@@ -53,6 +53,9 @@ struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t
     }
 
     struct cache_list *first = (struct cache_list *)aligned_alloc(cache_size, span_caches * cache_size);
+    if (!first)
+        return NULL;
+
     struct cache_list *next = first;
     memset(first, '\0', cache_size);
     while (--elements > 0)
@@ -84,7 +87,7 @@ uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
 }
 #pragma GCC pop_options
 
-void run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t per_cache, size_t span_caches, struct cache_list **allocation_out)
+bool run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t per_cache, size_t span_caches, struct cache_list **allocation_out)
 {
     size_t cache_size, allocation_size;
     struct cache_list *allocation;
@@ -98,6 +101,8 @@ void run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t p
 
         // create cache list including n elements across multiple cache sized allocations
         allocation = create_cache_list(cache_size, per_cache, span_caches);
+        if (!allocation)
+            return false;
 
         printf("Training and accessing cache L%d... ", cache_level + 1);
         // amount of list elements remains the same, while the jumps between them are variable
@@ -106,6 +111,7 @@ void run_cache_access_test(size_t *cache_sizes, size_t numer_of_caches, size_t p
         time_accesses(allocation, per_cache * span_caches);
 
         allocation_out[cache_level] = allocation; // save off the allocation
+        return true;
     }
 }
 
@@ -138,9 +144,14 @@ int main(int argc, char **argv)
     // run the cache access test:
     // list iteration of multiple sub-cache sized objects
     // across multiple cache sized allocations
-    run_cache_access_test(cache_sizes, CACHE_LEVELS, elements_per_cache, cache_count, allocations);
+    if (!run_cache_access_test(cache_sizes, CACHE_LEVELS, elements_per_cache, cache_count, allocations))
+    {
+        printf("Allocation test failed: %s\n", strerror(errno));
+        goto JUST_BAIL;
+    }
 
-    if (argc >= 6) {
+    if (argc >= 6)
+    {
         printf("Skipping page map check...\n");
         goto FREE_ALLOCATIONS;
     }
@@ -204,6 +215,6 @@ FREE_ALLOCATIONS:
     {
         free(allocations[i]);
     }
-
+JUST_BAIL:
     return 0;
 }

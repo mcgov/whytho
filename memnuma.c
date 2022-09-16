@@ -119,6 +119,7 @@ int main(int argc, char **argv)
 {
 
     size_t l1d = 0, l1i = 0, l2 = 0, l3 = 0;
+    struct timespec start, end;
     if (argc < 5)
     {
         printf("usage: mnuma `lscpu -C -B | tail -4 | awk ' { print $2 } ' | tr \"\n\" "
@@ -141,6 +142,7 @@ int main(int argc, char **argv)
     struct cache_list *allocations[CACHE_LEVELS] = {};
     size_t elements_per_cache = 0x100, cache_count = 0x100;
 
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &start);
     // run the cache access test:
     // list iteration of multiple sub-cache sized objects
     // across multiple cache sized allocations
@@ -149,6 +151,13 @@ int main(int argc, char **argv)
         printf("Allocation test failed: %s\n", strerror(errno));
         goto JUST_BAIL;
     }
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &end);
+
+    printf(
+        "Entire access test ran in: %lus  %luns\n"
+        "(Note: includes allocation, memset, and some printfs)\n",
+        end.tv_sec - start.tv_sec, end.tv_nsec - start.tv_nsec
+    );
 
     if (argc >= 6)
     {

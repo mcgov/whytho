@@ -11,7 +11,10 @@ ARGS=`getconf -a | grep CACHE_SIZE  | grep -v LEVEL_4 | sort  | awk ' { print $2
 
 # allow user args to replace the default cache sized args, passing 5 args will skip
 # the pagemap parsing and printing
-if [ "$#" -ne "1" ]; then
+if [ "$#" -eq "1" ]; then
+    echo "Appending arg $1..."
+    ARGS="$ARGS $1"
+elif [ "$#" -gt "4" ]; then
     echo "Warning, replacing cache arguments with arbitrary args passed to $0..."
     ARGS="${@:1}"
 fi;

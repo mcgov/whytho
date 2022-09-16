@@ -32,7 +32,6 @@ struct cache_list
 {
     struct cache_list *next;
     size_t data_sz;
-    size_t data;
 };
 
 /* create n number of linked list elements per cache sized area, across a span of multiple cached size areas */
@@ -40,7 +39,10 @@ struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t
 {
     size_t element_size = cache_size / per_cache;
     size_t elements = per_cache * span_caches;
-    assert(elements);
+    if (!elements || element_size < sizeof(struct cache_list)){
+        printf("Could not create element list of %lu %lu sized elements.\n", elements, element_size);
+        return NULL;
+    }
     // aligned alloc requires a power of 2, so check the cache size is one
     // and use the next highest size for the allocator if it's not.
     size_t pow2_check = next_highest_pow2(cache_size);
@@ -72,18 +74,36 @@ struct cache_list *create_cache_list(size_t cache_size, size_t per_cache, size_t
 uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
 {
     struct cache_list *list_iter = allocation;
-    size_t start, end;
+    struct timespec timer_start, timer_end;
+    size_t ticks_start, ticks_end, secs, nsecs;
     list_iter = allocation;
     int _dummy;
+
     // iterate list, time it, and show the time / elements iterated at the end.
-    start = __rdtscp(&_dummy);
+
+    clock_gettime(CLOCK_REALTIME, &timer_start);
+    ticks_start = __rdtscp(&_dummy);
+
     while (list_iter)
     {
         // train cache
         list_iter = list_iter->next;
     }
-    end = __rdtscp(&_dummy);
-    printf("List iterated in %lu clock ticks\n", (end - start) / element_count);
+
+    ticks_end = __rdtscp(&_dummy);
+    clock_gettime(CLOCK_REALTIME, &timer_end);
+
+    printf("List iterated in %lu clock ticks per element\n",
+                (ticks_end - ticks_start) / element_count);
+    secs = timer_end.tv_sec - timer_start.tv_sec;
+    nsecs = timer_end.tv_nsec - timer_start.tv_nsec;
+
+    printf("Total clock time: %lus  %luns",secs, nsecs);
+    if (secs == 0){
+        printf("( %luns per element)\n", nsecs/element_count);
+    } else {
+        printf("\n");
+    }
 }
 #pragma GCC pop_options
 
@@ -119,7 +139,6 @@ int main(int argc, char **argv)
 {
 
     size_t l1d = 0, l1i = 0, l2 = 0, l3 = 0;
-    struct timespec start, end;
     if (argc < 5)
     {
         printf("usage: mnuma `lscpu -C -B | tail -4 | awk ' { print $2 } ' | tr \"\n\" "
@@ -142,7 +161,6 @@ int main(int argc, char **argv)
     struct cache_list *allocations[CACHE_LEVELS] = {};
     size_t elements_per_cache = 0x100, cache_count = 0x100;
 
-    clock_gettime(CLOCK_MONOTONIC_COARSE, &start);
     // run the cache access test:
     // list iteration of multiple sub-cache sized objects
     // across multiple cache sized allocations
@@ -151,13 +169,7 @@ int main(int argc, char **argv)
         printf("Allocation test failed: %s\n", strerror(errno));
         goto JUST_BAIL;
     }
-    clock_gettime(CLOCK_MONOTONIC_COARSE, &end);
 
-    printf(
-        "Entire access test ran in: %lus  %luns\n"
-        "(Note: includes allocation, memset, and some printfs)\n",
-        end.tv_sec - start.tv_sec, end.tv_nsec - start.tv_nsec
-    );
 
     if (argc >= 6)
     {

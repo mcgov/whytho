@@ -30,7 +30,8 @@ install_dependencies() {
     fi
     for dependency in $@
     do
-        if [ -z `which $dependency` ]; # this doesn't work for libraries but then also sort of does
+        which $dependency
+        if [ $? -eq 1 ];
         then
             if [ -z "`test -f ./packages_added.log && cat ./packages_added.log | grep $dependency`" ];
             then
@@ -100,20 +101,23 @@ cleanup_interrupts_logs() {
 }
 
 install_sysbench() {
-    if [ -n `which sysbench` ];
+    which sysbench
+    if [ $? -eq 0 ];
     then
         return 0
     fi;
     install_dependencies sysbench curl
 
     # check if it was missing, if yes then use their package install script.
-    if [ -z `which sysbench` ];
+    which sysbench
+    if [ $? -eq 1 ];
     then
         curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
     fi;
 
     install_dependencies sysbench
-    if [ -z `which sysbench` ];
+    which sysbench
+    if [ $? -eq 1 ];
     then
         exit 0;
     fi;

@@ -6,6 +6,8 @@ source ./common.sh
 
 install_sysbench
 
+if [ -e "./sysbench_result.log" ]; then sudo rm ./sysbench_result.log; fi;
+
 sysbench memory  --memory-access-mode=rnd --memory-total-size=6G --memory-block-size=512M run &> sysbench_result.log
 
 #echo sysbench results

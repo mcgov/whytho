@@ -1,11 +1,20 @@
-Info Gathering Tools
+# whytho: Info gathering tools for Linux on Azure
 
 Some commands and scripts to run to get info about memory latency, storage, and CPU info.
 
-usage:
+**usage:**
+
+Run info gathering only:
+`./RUN_INFO_SCRIPTS.sh && ./ZIP_RESULTS.sh`
+
+Run perf tests only:
+`./RUN_PERF_BENCHMARKS.sh && ./ZIP_RESULTS.sh`
+
+Run perf and info gathering:
 `./RUN_ALL_TESTS.sh`
 
-outputs logs into a zip file into the top level dir: `$(hostname)-$(timestamp).zip`
+
+Outputs are logged and placed into a zip file into the top level dir: `$(hostname)-$(timestamp).zip`
 
 notes:
 - Some package dependency names may be different on your system (tested on ubuntu, opensuse and centos7.7)

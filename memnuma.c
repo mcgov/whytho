@@ -172,7 +172,7 @@ int main(int argc, char **argv)
         goto JUST_BAIL;
     }
 
-
+#ifdef PAGE_MAP_CHECK
     if (argc >= 6)
     {
         printf("Skipping page map check...\n");
@@ -230,9 +230,12 @@ int main(int argc, char **argv)
         }
     }
 
+
 // cleanup and close
 CLOSE_FD:
     close(fd);
+#endif
+
 FREE_ALLOCATIONS:
     for (int i = 0; i < CACHE_LEVELS; i++)
     {

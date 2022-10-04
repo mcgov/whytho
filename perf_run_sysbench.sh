@@ -21,8 +21,8 @@ compare_interrupts_logs
 
 # Memory functions speed test
 echo "sysbench running memory ------------"
-sysbench memory run
-sysbench memory run --memory-hugetlb=on
+sysbench memory run --memory-access-mode=rnd --memory-total-size=2G --memory-block-size=512M
+sysbench memory run --memory-access-mode=rnd --memory-total-size=2G --memory-block-size=512M --memory-hugetlb=on
 compare_interrupts_logs
 
 #threads

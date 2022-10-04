@@ -86,7 +86,6 @@ uint64_t time_accesses(struct cache_list *allocation, size_t element_count)
 
     while (list_iter)
     {
-        // train cache
         list_iter = list_iter->next;
     }
 

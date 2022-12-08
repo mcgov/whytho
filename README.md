@@ -2,7 +2,13 @@
 
 Some commands and scripts to run to get info about memory latency, storage, and CPU info.
 
-**usage:**
+**Tested platforms:**
+
+| CentOS 7.9 | Ubuntu 20.04 | OpenSuse LEAP 15.4 |
+
+Please contribute patches and feedback if you test on new platform :)
+
+**Usage:**
 
 Run info gathering only:
 `./RUN_INFO_SCRIPTS.sh && ./ZIP_RESULTS.sh`
@@ -16,7 +22,8 @@ Run perf and info gathering:
 
 Outputs are logged and placed into a zip file into the top level dir: `$(hostname)-$(timestamp).zip`
 
-notes:
+**notes:**
+
 - Some package dependency names may be different on your system (tested on ubuntu, opensuse and centos7.7)
 - Scripts were written to run on Azure and expect passwordless sudo is enabled in your shell session, might be annoying if you have to type in each time.
 - No guarantee packages will be available, etc. You may need to add EPEL etc.
